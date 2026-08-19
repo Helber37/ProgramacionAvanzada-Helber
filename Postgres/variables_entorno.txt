@@ -1,0 +1,79 @@
+===========================================================
+ VARIABLES DE ENTORNO REQUERIDAS - docker-compose.yml
+ Stack: PostgreSQL + pgAdmin4
+===========================================================
+
+Estas variables deben definirse en un archivo llamado ".env"
+ubicado en la MISMA carpeta que el docker-compose.yml
+(c:\Users\Administrador\Documents\Logica2026-1\Postgres\).
+
+-----------------------------------------------------------
+1) SERVICIO: db  (image: postgres:latest)
+-----------------------------------------------------------
+
+POSTGRES_USER
+    Usuario administrador (superusuario) que se crea al
+    inicializar la base de datos.
+    Obligatoria (si se omite, Postgres usa "postgres").
+    Ejemplo: POSTGRES_USER=admin
+
+POSTGRES_PASSWORD
+    Contrasena del usuario anterior.
+    OBLIGATORIA: sin ella el contenedor no arranca.
+    Ejemplo: POSTGRES_PASSWORD=MiClaveSegura123
+
+POSTGRES_DB
+    Nombre de la base de datos que se crea automaticamente
+    al primer arranque.
+    Opcional (por defecto toma el valor de POSTGRES_USER).
+    Ejemplo: POSTGRES_DB=logica2026
+
+-----------------------------------------------------------
+2) SERVICIO: pgadmin  (image: dpage/pgadmin4:latest)
+-----------------------------------------------------------
+
+PGADMIN_DEFAULT_EMAIL
+    Correo con el que se inicia sesion en la interfaz web
+    de pgAdmin. Debe tener formato de email valido.
+    Obligatoria.
+    Ejemplo: PGADMIN_DEFAULT_EMAIL=admin@ejemplo.com
+
+PGADMIN_DEFAULT_PASSWORD
+    Contrasena de acceso a la interfaz web de pgAdmin.
+    Obligatoria.
+    Ejemplo: PGADMIN_DEFAULT_PASSWORD=AdminPgSeguro123
+
+NOTA: PGADMIN_LISTEN_PORT ya esta fijada en 80 dentro del
+docker-compose.yml, por lo que NO requiere variable.
+
+===========================================================
+ PLANTILLA LISTA PARA COPIAR EN EL ARCHIVO .env
+===========================================================
+
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=cambia_esta_clave
+POSTGRES_DB=logica2026
+PGADMIN_DEFAULT_EMAIL=admin@ejemplo.com
+PGADMIN_DEFAULT_PASSWORD=cambia_esta_clave
+
+===========================================================
+ PUERTOS DE ACCESO
+===========================================================
+
+PostgreSQL -> localhost:5432
+pgAdmin    -> http://localhost:8080
+
+Dentro de pgAdmin, al registrar el servidor, usar como
+Host name/address el valor:  db
+(nombre del servicio en la red pgnetwork), NO "localhost".
+
+===========================================================
+ ADVERTENCIA
+===========================================================
+
+- No subir el archivo .env al repositorio. Verificar que
+  este listado en el .gitignore de la carpeta.
+- Los valores de ejemplo son solo demostrativos: cambiarlos
+  por credenciales reales antes de usar.
+- El servicio db no define un volumen persistente, por lo
+  que los datos se pierden al eliminar el contenedor.

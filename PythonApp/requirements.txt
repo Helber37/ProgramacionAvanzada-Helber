@@ -1,0 +1,15 @@
+# =============================================
+# REQUIREMENTS.TXT PARA APLICACIÓN PYTHON
+# =============================================
+# 
+# Esta aplicación solo utiliza módulos de la biblioteca estándar:
+# - time (para sleep)
+# - No requiere dependencias externas
+#
+# =============================================
+# Si en el futuro necesitas dependencias, agrégalas aquí:
+# ejemplo: flask==2.3.0
+# ejemplo: requests==2.31.0
+# =============================================
+numpy
+pandas

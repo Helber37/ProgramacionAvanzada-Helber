@@ -1,0 +1,11 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: pagina-progracion-avanzada
+    ports:
+      - "8081:80"
+    volumes:
+      # Tu código fuente
+      #- ~/Logica2026-1/PaginaWeb/dev:/usr/share/nginx/html
+      #- /PaginaWeb/dev:/usr/share/nginx/html
+    - /mnt/c/Users/helbe/Documents/Proyectos/ProgramacionAvanzada/PaginaWeb/dev:/usr/share/nginx/html

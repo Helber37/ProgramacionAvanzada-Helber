@@ -1,0 +1,21 @@
+services:
+  python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: python-app-container
+    restart: unless-stopped  # Siempre se ejecuta a menos que se detenga manualmente
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpu_shares: 512
+    cpus: 0.5
+    ports:
+      - "8083:5216"  # Ajusta el puerto según necesites
+    volumes:
+      - ./:/app  # Monta tu directorio local en /app dentro del contenedor
+    working_dir: /app
+    command: python main.py  # O el nombre de tu script principal
+    environment:
+      - PYTHONUNBUFFERED=1  # Para ver la salida en tiempo real
+    stdin_open: true  # Para mantener la entrada estándar abierta
+    tty: true        # Para mantener la terminal interactiva
