@@ -8,4 +8,4 @@ services:
       # Tu código fuente
       #- ~/Logica2026-1/PaginaWeb/dev:/usr/share/nginx/html
       #- /PaginaWeb/dev:/usr/share/nginx/html
-    - /mnt/c/Users/helbe/Documents/Proyectos/ProgramacionAvanzada/PaginaWeb/dev:/usr/share/nginx/html
+    - /mnt/c/Users/Helber/Documents/Proyectos/ProgramacionAvanzada-Helber/PaginaWeb/dev:/usr/share/nginx/html
