@@ -1,0 +1,17 @@
+services:
+  spacedementia:
+    build: .
+    container_name: space-dementia
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - SDL_AUDIODRIVER=pulseaudio
+      - PULSE_SERVER=unix:/tmp/pulse-socket
+    volumes:
+      # X11 display (Linux)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # PulseAudio socket (Linux)
+      - /run/user/1000/pulse/native:/tmp/pulse-socket:rw
+    network_mode: host
+    # Para Windows con VcXsrv/X410:
+    # environment:
+    #   - DISPLAY=host.docker.internal:0.0

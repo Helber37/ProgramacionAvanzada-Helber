@@ -1,0 +1,11 @@
+**/__pycache__
+**/*.pyc
+.git
+.gitignore
+docs/
+tests/
+Donut/
+*.md
+diagram.puml
+poetry.lock
+pyproject.toml

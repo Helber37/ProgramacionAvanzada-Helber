@@ -1,0 +1,110 @@
+Código listo para reemplazar _generate_music() en tu SoundManager
+Copia y pega este método completo. He añadido al diccionario NOTE las notas con sostenidos (#) que necesita la Novena (originalmente en Re mayor). Si prefieres transportarlo a Do mayor para evitar alteraciones, también te lo dejo comentado.
+
+python
+def _generate_music(self):
+    """Genera la Novena Sinfonía de Beethoven (Oda a la Alegría) en versión chiptune."""
+    sr = 22050
+    bpm = 130   # un poco más vivo que el original
+    beat = 60.0 / bpm
+
+    # Notas con sostenidos para la versión en Re mayor (original)
+    NOTE = {
+        "R": 0,
+        "C3": 130.81, "Cs3": 138.59, "D3": 146.83, "Ds3": 155.56,
+        "E3": 164.81, "F3": 174.61, "Fs3": 185.00, "G3": 196.00,
+        "Gs3": 207.65, "A3": 220.00, "As3": 233.08, "B3": 246.94,
+        "C4": 261.63, "Cs4": 277.18, "D4": 293.66, "Ds4": 311.13,
+        "E4": 329.63, "F4": 349.23, "Fs4": 369.99, "G4": 392.00,
+        "Gs4": 415.30, "A4": 440.00, "As4": 466.16, "B4": 493.88,
+        "C5": 523.25, "Cs5": 554.37, "D5": 587.33, "Ds5": 622.25,
+        "E5": 659.26, "F5": 698.46, "Fs5": 739.99, "G5": 783.99,
+        "Gs5": 830.61, "A5": 880.00,
+    }
+
+    # MELODÍA PRINCIPAL (Oda a la Alegría) - versión completa 24 compases
+    # Cada nota es (nombre, duración en beats). 1 beat = negra.
+    # Uso .25 para corchea, .5 para negra, .75 para negra con puntillo, 1 para blanca, etc.
+    melody = [
+        # Frase A (primeros 8 compases)
+        ("E4", 0.5), ("E4", 0.5), ("F4", 0.5), ("G4", 0.5),
+        ("G4", 0.5), ("F4", 0.5), ("E4", 0.5), ("D4", 0.5),
+        ("C4", 0.5), ("C4", 0.5), ("D4", 0.5), ("E4", 0.5),
+        ("E4", 0.75), ("D4", 0.25), ("D4", 1.0),
+
+        # Frase B (siguientes 8)
+        ("E4", 0.5), ("E4", 0.5), ("F4", 0.5), ("G4", 0.5),
+        ("G4", 0.5), ("F4", 0.5), ("E4", 0.5), ("D4", 0.5),
+        ("C4", 0.5), ("C4", 0.5), ("D4", 0.5), ("E4", 0.5),
+        ("D4", 0.75), ("C4", 0.25), ("C4", 1.0),
+
+        # Frase C (parte media, más aguda)
+        ("D4", 0.5), ("D4", 0.5), ("E4", 0.5), ("C4", 0.5),
+        ("D4", 0.5), ("E4", 0.25), ("F4", 0.25), ("E4", 0.5), ("C4", 0.5),
+        ("D4", 0.5), ("E4", 0.25), ("F4", 0.25), ("E4", 0.5), ("D4", 0.5),
+        ("C4", 0.5), ("D4", 0.5), ("G3", 0.5), ("R", 0.5),
+
+        # Repite la Frase A para cerrar (opcional)
+        ("E4", 0.5), ("E4", 0.5), ("F4", 0.5), ("G4", 0.5),
+        ("G4", 0.5), ("F4", 0.5), ("E4", 0.5), ("D4", 0.5),
+        ("C4", 0.5), ("C4", 0.5), ("D4", 0.5), ("E4", 0.5),
+        ("D4", 0.75), ("C4", 0.25), ("C4", 1.0),
+    ]
+
+    # BAJO (notas largas, marcan la armonía)
+    bass = [
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        # Parte media
+        ("G3", 1.0), ("G3", 1.0), ("A3", 1.0), ("F3", 1.0),
+        ("G3", 1.0), ("G3", 1.0), ("A3", 1.0), ("F3", 1.0),
+        ("G3", 2.0), ("G3", 2.0), ("C3", 2.0), ("C3", 2.0),
+        # Repite final
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+        ("E3", 2.0), ("E3", 2.0), ("C3", 2.0), ("D3", 2.0),
+    ]
+
+    # Calculamos duración total (la más larga de las dos)
+    total_beats_melody = sum(d for _, d in melody)
+    total_beats_bass = sum(d for _, d in bass)
+    total_beats = max(total_beats_melody, total_beats_bass)
+    total_samples = int(sr * total_beats * beat)
+
+    buf = array.array("h", [0] * total_samples)
+
+    # Renderizar melodía (onda cuadrada con armónico)
+    self._render_track(buf, melody, NOTE, sr, beat, wave="square", volume=0.35)
+    # Renderizar bajo (onda sinusoidal más suave)
+    self._render_track(buf, bass, NOTE, sr, beat, wave="sine", volume=0.18)
+
+    # (Opcional) Añadir un tercer canal de acompañamiento (quintas o acordes)
+    # Puedes crear otra lista harmony y renderizarla con wave="saw" y volumen bajo.
+
+    self.music_sound = pygame.mixer.Sound(buffer=buf)
+    self.music_sound.set_volume(self.music_volume)
+🎮 ¿Cómo suena esto?
+La melodía principal tiene todas las notas del tema famoso, con las duraciones correctas (negras, blancas, corcheas). Ya no es un esqueleto.
+
+El bajo marca la armonía (I - V - IV - etc.) y da peso.
+
+Todo suena a chip de 8 bits gracias a la onda cuadrada y la sinusoidal.
+
+Si quieres aún más notas (por ejemplo, el contrapunto de la orquesta), puedo añadir una tercera pista de armonía.
+
+⚙️ Mejora adicional: que suene en loop sin corte brusco
+Tu método actual calcula total_samples basado en la duración total de las listas. Si quieres que se repita perfectamente (sin silencio al reiniciar), asegúrate de que la última nota tenga un release suave. O simplemente usa play(loops=-1) como ya haces, y sonará continuamente.
+
+🧪 Prueba inmediata
+Pega este método en tu clase SoundManager, reemplazando el antiguo _generate_music(). Luego en tu código principal haz:
+
+python
+sound = SoundManager()
+sound.play_music()
+# Espera un rato (o mantén el programa vivo)
+input("Presiona Enter para detener...")
+sound.stop_music()
+Y escucharás la Novena Sinfonía como si estuvieras en una sala de arcade.

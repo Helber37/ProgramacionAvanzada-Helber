@@ -1,0 +1,428 @@
+@startuml SpaceDementia
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package pygame {
+    class Surface
+}
+
+' ============================================================
+'  ENTRADA
+' ============================================================
+package "main.py" <<Rectangle>> {
+    class Main <<module>> {
+        +main() void
+        Note: Inicializa pygame y ajusta WIDTH/HEIGHT<br/>al tamaño real de la pantalla<br/>Maquina de estados: "menu" &lt;-&gt; "playing"<br/>Bucle: menu.handle_event() / game.run_frame()
+    }
+}
+
+' ============================================================
+'  NUCLEO DEL JUEGO
+' ============================================================
+package "Juego" <<Rectangle>> {
+
+class Game {
+    -screen: Surface
+    -sound: SoundManager
+    -player: Player
+    -enemies: List[Enemy]
+    -bullets: List[Bullet]
+    -enemy_bullets: List[Bullet]
+    -powerups: List[PowerUp]
+    -explosions: List[Explosion]
+    -score: int
+    -level: int
+    -max_enemies: int
+    -background: Background
+    -paused: bool
+    -auto_shoot_timer: int
+    -game_over: bool
+    -game_over_timer: int
+    -level_timer: int
+    -boss_phase: bool
+    -boss: Boss
+    -boss_minion_timer: int
+    +Game(screen, sound_manager, start_level)
+    +run_frame(clock): str
+    +run() void
+    +spawn_enemy() void
+    +spawn_powerup(x, y) void
+    +auto_shoot_weapons() void
+    +update_game_state() void
+    +draw_game_elements() void
+    +check_collision(obj1, obj2): bool
+    +check_attack(enemy, player): bool
+    +draw_text(text, position, size) void
+    +draw_powerups_visual() void
+    -_play_sound(name) void
+    -_update_boss() void
+    -_create_boss(level): Boss
+    -_advance_level() void
+    Note: run_frame() procesa 1 frame y devuelve<br/>"quit" / "menu" / None (lo llama Main)<br/>Tecla P para pausar<br/>max_enemies = 5 + 3*level<br/>Timer regresivo por nivel (LEVEL_DURATION)<br/>Boss aparece al terminar el timer<br/>Subditos del boss: max 3 enemigos cada ~3s<br/>+10 puntos por enemigo, +2 por bala enemiga<br/>Al subir nivel: size +2, life +1, score = 0
+}
+
+class Player {
+    -x: int
+    -y: int
+    -size: int
+    -speed: int
+    -life: int
+    -powerups: dict
+    -__shield_frames: int 
+    +move(direction: str) void
+    +add_powerup(powerup_type: str) void
+    +remove_powerup(powerup_type: str) void
+    +has_powerup(powerup_type: str): bool
+    +get_powerups_list(): List[str]
+    +activar_escudo(duracion_frames: int) void
+    +esta_protegido(): bool
+    +actualizar_escudo() void
+    +draw(screen) void
+    Note: powerups es un dict {tipo: contador}<br/>WEAPON_RIGHT: hasta 5 acumulables<br/>WEAPON_LEFT: hasta 3 acumulables<br/>Otros power-ups: maximo 1<br/>Al impactar pierde primero los otros<br/>WEAPON_RIGHT esta protegido: si es el<br/>unico que queda, se pierde vida<br/>Se dibuja como circulo azul
+}
+
+class Enemy {
+    -x: int
+    -y: int
+    -size: int
+    -speed: int
+    -agil: bool
+    -direction_x: int
+    +shoot(): Bullet
+    +move() void
+    +rotate_point(point, angle): tuple
+    +draw(screen, player_x, player_y) void
+    Note: Se mueve de derecha a izquierda<br/>agil=true: zigzag vertical + AMARILLO<br/>agil=false: linea recta + ROJO<br/>Velocidad limitada a max 9 (bala = 10)<br/>Limite del zigzag: 30 .. HEIGHT-30<br/>Triangulo apuntando a la izquierda
+}
+
+class Bullet {
+    -x: int
+    -y: int
+    -speed: int
+    -width: int
+    -height: int
+    -direction: str
+    -frame: int
+    +move() void
+    +draw(screen) void
+    Note: 8 direcciones: UP, DOWN, LEFT, RIGHT,<br/>DIAG_LEFT, DIAG_RIGHT,<br/>DIAG_DOWN_LEFT, DIAG_DOWN_RIGHT<br/>Las diagonales se mueven a speed * 0.7<br/>RIGHT: alargada naranja/rojo pulsante retro<br/>UP: cian - LEFT: azul - DOWN: amarillo<br/>Diagonales: verde claro
+}
+
+class PowerUp {
+    -x: int
+    -y: int
+    -size: int
+    -powerup_type: str
+    -speed_x: int
+    -speed_y: float
+    -age: int
+    {static} WEAPON_LEFT: str
+    {static} WEAPON_RIGHT: str
+    {static} WEAPON_DIAG_RIGHT: str
+    {static} WEAPON_DIAG_LEFT: str
+    {static} WEAPON_DIAG_DOWN_RIGHT: str
+    {static} WEAPON_DIAG_DOWN_LEFT: str
+    {static} WEAPON_UP: str
+    {static} WEAPON_DOWN: str
+    {static} LIFE: str
+    {static} SHIELD: str
+    {static} COLORS: dict
+    {static} SYMBOLS: dict
+    +move() void
+    +draw(screen) void
+    Note: 9 tipos diferentes (8 armas + vida)<br/>Se dibujan como estrellas en pantalla<br/>Movimiento de derecha a izquierda<br/>Oscilacion sinusoidal en Y<br/>Colores: AZUL, AMARILLO, CIAN, VERDE, ROSA
+}
+
+class Explosion {
+    -x: int
+    -y: int
+    -num_particles: int
+    -particles: List[dict]
+    -lifetime: int
+    -age: int
+    {static} COLORS: List[tuple]
+    +create_particles() void
+    +update() void
+    +draw(screen) void
+    +is_dead(): bool
+    Note: Particulas sin fisica, solo visual<br/>Se crean al eliminar enemigos y boss<br/>Desvanecimiento gradual (30 frames)
+}
+
+}
+
+' ============================================================
+'  JEFES FINALES
+' ============================================================
+package "Jefes" <<Rectangle>> {
+
+abstract class Boss {
+    -name: str
+    -size: int
+    -x: int
+    -y: int
+    -base_x: int
+    -hp: int
+    -max_hp: int
+    -level: int
+    -speed_y: int
+    -direction_y: int
+    -alive: bool
+    -charging: bool
+    -charge_speed: int
+    -charge_target_x: int
+    -charge_cooldown: int
+    -charge_cooldown_max: int
+    -returning: bool
+    -shoot_cooldown: int
+    -shoot_rate: int
+    +take_damage(damage) void
+    +move() void
+    +shoot(): List[Bullet]
+    +get_hit_rect(): Rect
+    +draw_health_bar(screen) void
+    {abstract} +draw(screen) void
+    {abstract} -_create_bullets(): List[Bullet]
+    Note: CLASE BASE: las subclases implementan<br/>draw() y _create_bullets()<br/>HP = BOSS_HP + (level-1)*50<br/>BOSS_HP = BULLET_DAMAGE * 100 = 500<br/>Movimiento vertical suave<br/>Carga hacia la izquierda y regresa<br/>Dispara cada 20 frames (shoot_rate)<br/>Barra de vida en la parte superior<br/>Al morir: 5 explosiones grandes
+}
+
+class CubeBoss {
+    -angle_x: float
+    -angle_y: float
+    -rot_speed: float
+    -fov: int
+    -z_distance: int
+    {static} FACE_COLORS: List[tuple]
+    {static} VERTICES: List[tuple]
+    {static} FACES: List[List[int]]
+    {static} FACE_NORMALS: List[tuple]
+    +move() void
+    +draw(screen) void
+    -_rotate(point, ang_x, ang_y): tuple
+    -_project(point_3d): tuple
+    -_get_rotated_normals(): List
+    -_get_face_centers_2d(): List
+    -_create_bullets(): List[Bullet]
+    Note: Primer jefe final: cubo 3D rotante<br/>8 vertices, 6 caras de colores distintos<br/>Proyeccion en perspectiva (fov, z_distance)<br/>Dispara desde las caras visibles<br/>usando las normales rotadas
+}
+
+}
+
+' ============================================================
+'  ESCENARIO
+' ============================================================
+package "Fondo" <<Rectangle>> {
+
+class Background {
+    -level: int
+    -frame_count: int
+    -stars: List[dict]
+    -nebula_particles: List[dict]
+    -black_hole: BlackHole
+    {static} LEVEL_ACCENTS: List[List[tuple]]
+    +update(level) void
+    +draw(screen) void
+    -_generate(level) void
+    -_make_star(speed, size, brightness): dict
+    -_draw_star(screen, star) void
+    Note: Campo de estrellas con parallax y brillo<br/>5 paletas de acento por nivel:<br/>1 azules, 2 cyans, 3 verdes/amarillos,<br/>4 naranjas/rojos, 5+ magentas/rojos<br/>Se regenera al cambiar de nivel
+}
+
+class BlackHole {
+    -x: int
+    -y: int
+    -radius: int
+    -angle: float
+    -tilt: float
+    -disk_particles: List[dict]
+    -lensing_particles: List[dict]
+    -falling: List[dict]
+    -_sphere_surf: Surface
+    +update(dt) void
+    +draw(screen) void
+    -_build_sphere() void
+    -_disk_color(dist): tuple
+    -_draw_disk_particle(screen, p) void
+    -_draw_falling(screen, f, ang) void
+    -_draw_lensing_arc(screen, top) void
+    Note: Definido en agujeronegro.py (raiz)<br/>Aparece desde el nivel 2<br/>radio = 35 + level*8 (crece por nivel)<br/>Disco de acrecion + lente gravitacional
+}
+
+}
+
+' ============================================================
+'  MENU E INTERFAZ
+' ============================================================
+package "Menu" <<Rectangle>> {
+
+class Menu {
+    -screen: Surface
+    -sound: SoundManager
+    -state: str
+    -starfield: StarField
+    -frame: int
+    -selected_level: int
+    -max_levels: int
+    -fullscreen: bool
+    -show_fps: bool
+    -main_buttons: List[RetroButton]
+    -level_buttons: List[RetroButton]
+    -sound_sliders: List[SliderWidget]
+    -settings_options: List[str]
+    -main_index: int
+    -level_index: int
+    -sound_index: int
+    -settings_index: int
+    {static} STATE_MAIN: str
+    {static} STATE_LEVELS: str
+    {static} STATE_SOUND: str
+    {static} STATE_SETTINGS: str
+    +handle_event(event): tuple
+    +update() void
+    +draw() void
+    -_build_level_buttons() void
+    -_handle_main(event) void
+    -_handle_levels(event) void
+    -_handle_sound(event) void
+    -_handle_settings(event) void
+    -_select_level_button(index, relative) void
+    -_select_sound_slider(index) void
+    -_adjust_slider(delta) void
+    -_draw_title() void
+    -_draw_subtitle(text) void
+    -_draw_back_hint() void
+    -_draw_main() void
+    -_draw_levels() void
+    -_draw_sound() void
+    -_draw_settings() void
+    Note: 4 submenus: MAIN, LEVELS, SOUND, SETTINGS<br/>handle_event() devuelve ("play", nivel)<br/>Permite arrancar en cualquiera de 5 niveles<br/>Sliders de volumen para SFX y musica
+}
+
+class StarField {
+    -stars: List[dict]
+    +update() void
+    +draw(screen) void
+    Note: 200 estrellas animadas de fondo del menu
+}
+
+class RetroButton {
+    -rect: Rect
+    -text: str
+    -color: tuple
+    -text_color: tuple
+    -hover: bool
+    -selected: bool
+    -pulse_frame: int
+    +draw(screen) void
+}
+
+class SliderWidget {
+    -x: int
+    -y: int
+    -width: int
+    -height: int
+    -label: str
+    -value: float
+    -color: tuple
+    -selected: bool
+    +draw(screen) void
+}
+
+}
+
+' ============================================================
+'  AUDIO
+' ============================================================
+package "Audio" <<Rectangle>> {
+
+class SoundManager {
+    -sfx_volume: float
+    -music_volume: float
+    -enabled: bool
+    -sounds: dict
+    -music_sound: Sound
+    -music_playing: bool
+    -music_channel: Channel
+    +play(name) void
+    +play_music() void
+    +stop_music() void
+    +set_sfx_volume(volume) void
+    +set_music_volume(volume) void
+    +get_sfx_volume(): float
+    +get_music_volume(): float
+    +cleanup() void
+    -_tone(frequency, duration_ms, wave, fade_out): Sound
+    -_sweep(f_start, f_end, duration_ms, wave): Sound
+    -_generate_sounds() void
+    -_generate_music() void
+    -_render_track(buf, notes, note_map, sr, beat, wave, volume) void
+    -_apply_volumes() void
+    Note: Sintetiza TODO el audio por codigo<br/>(no usa archivos de sonido)<br/>Efectos: laser, enemy_laser, explosion,<br/>hit, powerup, coin, boss_roar,<br/>boss_defeat, game_over, menu_click,<br/>menu_confirm<br/>Musica generada por pistas con ondas
+}
+
+}
+
+' ============================================================
+'  CONFIGURACION
+' ============================================================
+class Config <<module>> {
+    {static} WIDTH: int
+    {static} HEIGHT: int
+    {static} FPS: int
+    {static} LEVEL_DURATION: int
+    {static} BULLET_DAMAGE: int
+    {static} BOSS_HP: int
+    {static} WHITE: tuple
+    {static} RED: tuple
+    {static} GREEN: tuple
+    {static} BLUE: tuple
+    {static} BLACK: tuple
+    {static} YELLOW: tuple
+    {static} CYAN: tuple
+    {static} MAGENTA: tuple
+    {static} ORANGE: tuple
+    Note: config.py - constantes globales<br/>FPS = 30, LEVEL_DURATION = 120 s<br/>BULLET_DAMAGE = 5, BOSS_HP = 500<br/>main.py sobreescribe WIDTH/HEIGHT<br/>con el tamaño real de la pantalla
+}
+
+' ============================================================
+'  RELACIONES
+' ============================================================
+
+' --- Herencia ---
+Boss <|-- CubeBoss
+
+' --- Composicion ---
+Main *-- Game : crea
+Main *-- Menu : crea
+Main *-- SoundManager : crea
+
+Game *-- Player : contiene "1"
+Game *-- Enemy : crea "0..*"
+Game *-- Bullet : contiene "0..*"
+Game *-- PowerUp : crea "0..*"
+Game *-- Explosion : crea "0..*"
+Game *-- Background : contiene "1"
+
+Background *-- BlackHole : contiene "0..1"
+
+Menu *-- StarField : contiene "1"
+Menu *-- RetroButton : contiene "0..*"
+Menu *-- SliderWidget : contiene "2"
+
+' --- Agregacion (referencias compartidas) ---
+Game o-- Boss : referencia "0..1"
+Game o-- SoundManager : usa
+Menu o-- SoundManager : usa
+
+' --- Dependencias ---
+Game ..> CubeBoss : instancia
+Enemy ..> Bullet : crea
+Boss ..> Bullet : crea
+Player ..> PowerUp : colecciona
+Game ..> Surface : usa
+Menu ..> Surface : usa
+Game ..> Config : usa
+Menu ..> Config : usa
+Background ..> Config : usa
+
+@enduml
