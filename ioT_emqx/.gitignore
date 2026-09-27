@@ -1,0 +1,19 @@
+# Ignora cualquier archivo .env en cualquier carpeta del proyecto (contraseñas/credenciales reales)
+.env
+
+# Ignora las carpetas que Python crea automáticamente con archivos compilados
+__pycache__/
+
+# Ignora archivos Python compilados sueltos (se regeneran solos)
+*.pyc
+
+# Ignora la carpeta del entorno virtual de Python (se recrea con pip, no hace falta subirla)
+.venv/
+
+# --- específico de este proyecto ---
+
+# Refuerza que el .env de Alertas/ (con la contraseña de Gmail) nunca se suba
+Alertas/.env
+
+# Ignora la lista de correos reales de personas
+destinatarios.txt

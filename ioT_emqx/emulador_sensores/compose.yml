@@ -1,0 +1,28 @@
+# ==============================================================================
+# Emulador de sensores (Python) -> EMQX del stack ../compose.yml
+# Levanta primero el stack principal; este se conecta al puerto MQTT publicado
+# en el host (EMQX_MQTT_PORT del ../.env).
+#
+#   docker compose up -d --build
+#   docker compose logs -f
+# ==============================================================================
+
+services:
+  emulador:
+    build: .
+    image: emulador-sensores:latest
+    container_name: emulador-sensores
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: ${MQTT_HOST:-host.docker.internal}
+      MQTT_PORT: ${MQTT_PORT:-1884}
+      INTERVAL: ${INTERVAL:-3}
+      # EMQX del demo sin autenticación: conexión anónima (sin MQTT_USERNAME/PASSWORD)
+    extra_hosts:
+      # En Docker Desktop ya existe; en Linux hace falta para llegar al host
+      - "host.docker.internal:host-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

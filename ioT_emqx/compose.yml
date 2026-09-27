@@ -1,0 +1,144 @@
+# ==============================================================================
+# Stack IoT: EMQX (MQTT) -> Telegraf -> VictoriaMetrics (TSDB) -> Grafana (viz)
+# PostgreSQL es opcional (perfil "postgres").
+#
+#   docker compose up -d                      # stack base (sin postgres)
+#   docker compose --profile postgres up -d   # stack + postgres
+# ==============================================================================
+
+# Rotación de logs reutilizable (evita que llenen el disco)
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # --- EMQX: broker MQTT ------------------------------------------------------
+  emqx:
+    image: emqx/emqx:${EMQX_VERSION}
+    container_name: emqx
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "${EMQX_MQTT_PORT}:1883"        # MQTT
+      - "${EMQX_WS_PORT}:8083"          # MQTT sobre WebSocket
+      - "${EMQX_WSS_PORT}:8084"         # MQTT sobre WebSocket (TLS)
+      - "${EMQX_MQTTS_PORT}:8883"       # MQTT (TLS)
+      - "${EMQX_DASHBOARD_PORT}:18083"  # Dashboard web
+    environment:
+      EMQX_NODE__NAME: ${EMQX_NODE_NAME}
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_DASHBOARD_USER}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD}
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_log:/opt/emqx/log
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - iot-network
+
+  # --- VictoriaMetrics: base de datos de series temporales --------------------
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:${VICTORIAMETRICS_VERSION}
+    container_name: victoriametrics
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "${VM_PORT}:8428"               # HTTP API + UI (compatible con Prometheus)
+    volumes:
+      - victoria_data:/victoria-metrics-data
+    command:
+      - "-storageDataPath=/victoria-metrics-data"
+      - "-httpListenAddr=:8428"
+      - "-retentionPeriod=${VM_RETENTION}"
+    networks:
+      - iot-network
+
+  # --- Telegraf: puente MQTT (EMQX) -> VictoriaMetrics ------------------------
+  telegraf:
+    image: telegraf:${TELEGRAF_VERSION}
+    container_name: telegraf
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      emqx:
+        condition: service_healthy
+      victoriametrics:
+        condition: service_started
+    networks:
+      - iot-network
+
+  # --- Grafana: visualización -------------------------------------------------
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION}
+    container_name: grafana
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_INSTALL_PLUGINS: ${GRAFANA_PLUGINS}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Provisioning declarativo (datasource de VictoriaMetrics ya configurado)
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      victoriametrics:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    networks:
+      - iot-network
+
+  # --- PostgreSQL: metadatos / configuración (OPCIONAL) ----------------------
+  # Se activa con:  docker compose --profile postgres up -d
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: postgres
+    restart: unless-stopped
+    logging: *default-logging
+    profiles: ["postgres"]
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - iot-network
+
+volumes:
+  emqx_data:
+  emqx_log:
+  victoria_data:
+  grafana_data:
+  postgres_data:
+
+networks:
+  iot-network:
+    driver: bridge
