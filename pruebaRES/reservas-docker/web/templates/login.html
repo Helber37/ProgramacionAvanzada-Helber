@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Iniciar sesión{% endblock %}
+{% block contenido %}
+<section class="tarjeta angosta">
+  <h1>Iniciar sesión</h1>
+  <form method="post">
+    <label>Correo institucional <input type="email" name="correo" required autofocus></label>
+    <label>Contraseña <input type="password" name="password" required></label>
+    <button>Entrar</button>
+  </form>
+  <p class="nota">¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+:root {
+  --fondo: #eef2f4;
+  --superficie: #ffffff;
+  --tinta: #16222e;
+  --apagado: #5b6b78;
+  --acento: #0f6e6e;
+  --ocupado: #d9532b;
+  --libre: #d3e8e4;
+  --linea: #cdd8de;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--tinta);
+  font-family: "Source Sans 3", system-ui, sans-serif; line-height: 1.5; }
+h1 { font-family: Sora, sans-serif; font-size: 1.6rem; margin: 0 0 .5rem; }
+a { color: var(--acento); }
+
+.barra { display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; flex-wrap: wrap; padding: .9rem 1.5rem; background: var(--tinta); }
+.barra a { color: #fff; text-decoration: none; }
+.marca { font-family: Sora, sans-serif; font-weight: 700; }
+.barra nav { display: flex; gap: 1.2rem; }
+.barra nav a:hover { text-decoration: underline; }
+
+main { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+.tarjeta { background: var(--superficie); border: 1px solid var(--linea);
+  border-radius: 10px; padding: 1.75rem; }
+.tarjeta.angosta { max-width: 420px; margin: 3rem auto; }
+.nota { color: var(--apagado); font-size: .95rem; }
+
+form { display: grid; gap: 1rem; margin-top: 1rem; }
+label { display: grid; gap: .3rem; font-weight: 600; font-size: .95rem; }
+input, select { padding: .6rem .7rem; border: 1px solid var(--linea); border-radius: 6px;
+  font: inherit; background: #fff; }
+input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--acento); outline-offset: 2px; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+button { padding: .7rem 1rem; border: 0; border-radius: 6px; background: var(--acento);
+  color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+button:hover { filter: brightness(1.1); }
+button.secundario { background: transparent; color: var(--ocupado);
+  border: 1px solid var(--ocupado); padding: .3rem .7rem; }
+
+.aviso { padding: .7rem 1rem; border-radius: 6px; margin: 0 0 1rem; }
+.aviso.ok { background: #dcefe5; color: #14502f; }
+.aviso.error { background: #fbe3dc; color: #8a2a10; }
+
+/* franja de disponibilidad del día */
+.franja { position: relative; height: 38px; background: var(--libre);
+  border-radius: 6px; overflow: hidden; }
+.bloque { position: absolute; top: 0; bottom: 0; }
+.bloque.ocupado { background: var(--ocupado); }
+.bloque.tuyo { background: var(--acento); opacity: .85; }
+.horas { display: flex; justify-content: space-between; font-size: .8rem;
+  color: var(--apagado); margin-top: .25rem; }
+.leyenda { font-size: .85rem; color: var(--apagado); margin: .5rem 0 0; }
+.pt { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px;
+  vertical-align: -1px; margin: 0 .25rem 0 .8rem; }
+.pt.ocupado { background: var(--ocupado); } .pt.tuyo { background: var(--acento); }
+
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+th, td { text-align: left; padding: .6rem .4rem; border-bottom: 1px solid var(--linea); }
+td form { margin: 0; }
+
+@media (max-width: 520px) { .fila { grid-template-columns: 1fr; } }
+
+/* ---- reservas con módulos ---- */
+.check { display: flex; align-items: center; gap: .5rem; font-weight: 400; }
+.check input { width: auto; }
+fieldset { border: 1px solid var(--linea); border-radius: 6px; padding: .6rem 1rem; }
+fieldset .check { margin: .3rem 0; }
+legend { font-weight: 600; font-size: .95rem; padding: 0 .4rem; }
+.mod { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: center; margin-bottom: .35rem; }
+.mod:not(:has(.mod-n)) { grid-template-columns: 1fr; }
+.mod-n { font-size: .8rem; color: var(--apagado); min-width: 5.5rem; }
+.bloque.cerrado { background: repeating-linear-gradient(45deg, #b9c4cb, #b9c4cb 4px, #d4dce1 4px, #d4dce1 8px); }
+.pt.cerrado { background: #b9c4cb; }
+.scroll { overflow-x: auto; }
+#info { margin: 0; }

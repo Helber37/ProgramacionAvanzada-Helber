@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Reservar un espacio{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h1>Reservar un espacio</h1>
+  <form method="post" id="form-reserva">
+    <div class="fila">
+      <label>Categoría
+        <select id="categoria">
+          <option value="">Todas</option>
+          {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre|capitalize }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="solo_accesibles"> Solo espacios accesibles (movilidad reducida)</label>
+    </div>
+
+    <label>Espacio
+      <select name="espacio_id" id="espacio" required>
+        <option value="" disabled selected>Elige un espacio</option>
+        {% for e in espacios %}
+        <option value="{{ e.id }}" data-categoria="{{ e.categoria_id }}" data-accesible="{{ 1 if e.accesible else 0 }}">
+          {{ e.nombre }} ({{ e.tipo|replace('_', ' ') }}){% if e.accesible %} - accesible{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <p class="nota" id="info" hidden></p>
+
+    <fieldset id="modulos-caja" hidden>
+      <legend>Módulos (si no eliges ninguno, reservas el espacio completo)</legend>
+      <div id="modulos"></div>
+    </fieldset>
+
+    <label>Fecha <input type="date" name="fecha" id="fecha" required></label>
+    <div class="fila">
+      <label>Inicio <input type="time" name="hora_inicio" id="hora_inicio" required></label>
+      <label>Fin <input type="time" name="hora_fin" id="hora_fin" required></label>
+    </div>
+    <div class="fila">
+      <label>Número de asistentes <input type="number" name="asistentes" id="asistentes" min="1"></label>
+      <label>Motivo <input type="text" name="motivo" maxlength="200" placeholder="Práctica, reunión, torneo..."></label>
+    </div>
+
+    <div class="franja-caja">
+      <div id="franjas"></div>
+      <div class="horas" id="horas"></div>
+      <p class="leyenda"><span class="pt ocupado"></span> Ocupado <span class="pt cerrado"></span> Cerrado <span class="pt tuyo"></span> Tu selección</p>
+    </div>
+    <p class="aviso error" id="error-js" hidden></p>
+    <button>Confirmar reserva</button>
+  </form>
+</section>
+<script src="{{ url_for('static', filename='reservar.js') }}"></script>
+{% endblock %}

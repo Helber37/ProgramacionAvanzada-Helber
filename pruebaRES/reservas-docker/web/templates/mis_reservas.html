@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Mis reservas{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <h1>Mis reservas</h1>
+  {% if not reservas %}
+    <p>Aún no tienes reservas. <a href="{{ url_for('reservar') }}">Reserva un espacio</a>.</p>
+  {% else %}
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Espacio</th><th>Módulos</th><th>Fecha</th><th>Horario</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for r in reservas %}
+      <tr>
+        <td>{{ r.espacio }}</td>
+        <td>{{ r.modulos or '-' }}</td>
+        <td>{{ r.inicio.strftime('%d/%m/%Y') }}</td>
+        <td>{{ r.inicio.strftime('%H:%M') }} a {{ r.fin.strftime('%H:%M') }}</td>
+        <td>
+          {% if r.estado == 'cancelada' %}Cancelada
+          {% elif r.inicio > ahora %}
+          <form method="post" action="{{ url_for('cancelar', rid=r.id) }}">
+            <button class="secundario">Cancelar</button>
+          </form>
+          {% else %}Finalizada{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
