@@ -8,6 +8,23 @@ import pandas as pd               # Manejo de datos y archivos CSV
 from scipy import stats           # Pruebas estadísticas
 import matplotlib.pyplot as plt   # Creación de gráficas
 import seaborn as sns             # Visualización estadística
+from pathlib import Path          # Manejo de rutas de archivos y carpetas
+
+# Crear la carpeta de imágenes junto a este archivo, independientemente de la terminal.
+CARPETA_IMAGENES = Path(__file__).resolve().parent / "imagenes"
+CARPETA_IMAGENES.mkdir(parents=True, exist_ok=True)
+REGENERAR_IMAGENES = True  # True: reemplaza imágenes antiguas; False: conserva las existentes.
+
+
+def guardar_grafica(nombre):
+    """Guardar la gráfica actual; reemplazar imágenes antiguas si está habilitado."""
+    ruta = CARPETA_IMAGENES / nombre  # Construir la ruta de destino.
+    if ruta.exists() and not REGENERAR_IMAGENES:  # Conservar la imagen si no se desea regenerar.
+        print(f"Imagen existente (sin cambios): {ruta}")
+    else:  # Guardar la gráfica correcta, reemplazando una copia antigua si corresponde.
+        plt.savefig(ruta, dpi=300)  # Guardar la figura actual con alta resolución.
+        print(f"Imagen guardada: {ruta}")
+
 
 
 # ============================================================
@@ -117,16 +134,14 @@ plt.ylabel("Calificación de matemáticas")
 plt.tight_layout()
 
 # Guardar las gráficas en la carpeta imagenes
-plt.savefig("imagenes/grafica_matematicas.png", dpi=300)
-plt.savefig("imagenes/grafica_cinco_grupos.png", dpi=300)
-plt.savefig("imagenes/grafica_correlacion.png", dpi=300)
-plt.savefig("imagenes/grafica_chi_cuadrado.png", dpi=300)
+guardar_grafica("grafica_matematicas.png")  # Guardar solo la gráfica de género.
 
 # Mostrar mensaje de confirmación
-print("\nGráfica guardada: grafica_matematicas.png")
+print("\nGráfica de matemáticas procesada.")
 
 # Mostrar la gráfica en una ventana si el entorno lo permite
 plt.show()
+plt.close()  # Cerrar la figura actual para no reutilizarla en la siguiente gráfica.
 
 
 # ============================================================
@@ -252,10 +267,11 @@ plt.ylabel("Calificación de matemáticas")
 plt.tight_layout()
 
 # Guardar la imagen en la carpeta del proyecto
-plt.savefig("grafica_cinco_grupos.png", dpi=300)
+guardar_grafica("grafica_cinco_grupos.png")  # Guardar esta gráfica en imagenes, sin sobrescribir.
 
 # Mostrar la gráfica si el entorno lo permite
 plt.show()
+plt.close()  # Cerrar la figura actual para no reutilizarla en la siguiente gráfica.
 
 # ============================================================
 # 12. COMPARACIÓN DE DOS MUESTRAS PAREADAS
@@ -380,10 +396,11 @@ plt.ylabel("Calificación de lectura")
 plt.tight_layout()
 
 # Guardar la imagen en la carpeta del proyecto
-plt.savefig("grafica_correlacion.png", dpi=300)
+guardar_grafica("grafica_correlacion.png")  # Guardar esta gráfica en imagenes, sin sobrescribir.
 
 # Mostrar la gráfica si el entorno lo permite
 plt.show()
+plt.close()  # Cerrar la figura actual para no reutilizarla en la siguiente gráfica.
 
 # ============================================================
 # 17. PRUEBA CHI-CUADRADO DE INDEPENDENCIA
@@ -442,7 +459,8 @@ plt.legend(title="Curso de preparación")
 
 # Ajustar y guardar la gráfica
 plt.tight_layout()
-plt.savefig("grafica_chi_cuadrado.png", dpi=300)
+guardar_grafica("grafica_chi_cuadrado.png")  # Guardar esta gráfica en imagenes, sin sobrescribir.
 
 # Mostrar la gráfica si el entorno lo permite
 plt.show()
+plt.close()  # Cerrar la figura actual para no reutilizarla en la siguiente gráfica.
