@@ -1,7 +1,6 @@
 
 # ============================================================
 # ANÁLISIS ESTADÍSTICO - STUDENTS PERFORMANCE
-# Comparación de calificaciones de matemáticas por género
 # ============================================================
 
 import pandas as pd               # Manejo de datos y archivos CSV
@@ -13,7 +12,8 @@ from pathlib import Path          # Manejo de rutas de archivos y carpetas
 # Crear la carpeta de imágenes junto a este archivo, independientemente de la terminal.
 CARPETA_IMAGENES = Path(__file__).resolve().parent / "imagenes"
 CARPETA_IMAGENES.mkdir(parents=True, exist_ok=True)
-REGENERAR_IMAGENES = True  # True: reemplaza imágenes antiguas; False: conserva las existentes.
+REGENERAR_IMAGENES = False  # No vuelve a generar ni sobrescribir las imágenes.
+# REGENERAR_IMAGENES = True  # True: reemplaza imágenes antiguas; False: conserva las existentes.
 
 
 def guardar_grafica(nombre):
@@ -24,8 +24,6 @@ def guardar_grafica(nombre):
     else:  # Guardar la gráfica correcta, reemplazando una copia antigua si corresponde.
         plt.savefig(ruta, dpi=300)  # Guardar la figura actual con alta resolución.
         print(f"Imagen guardada: {ruta}")
-
-
 
 # ============================================================
 # 1. CARGAR EL DATASET

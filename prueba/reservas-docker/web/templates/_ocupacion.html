@@ -1,0 +1,13 @@
+<section class="ocupacion-panel" aria-label="Panel de ocupación institucional">
+  <div class="ocupacion-cabecera"><div><span class="etiqueta">DISPONIBILIDAD INSTITUCIONAL</span><h2>Panel de ocupación</h2></div><div class="ocupacion-estado-actualizacion"><span class="oc-pulso" aria-hidden="true"></span><p class="nota" id="ocupacion-actualizado" role="status">Consultando PostgreSQL…</p></div></div>
+  <div class="ocupacion-resumen oc-resumen-original">
+    <article class="ocupacion-tarjeta ocupacion-primera"><div class="ocupacion-anillo" id="ocupacion-anillo"><strong id="ocupacion-pct">—</strong></div><div><h3>Ocupación ahora</h3><small id="ocupacion-modulos">— módulos</small></div></article>
+    <article class="ocupacion-tarjeta"><strong class="ocupacion-cifra" id="ocupacion-espacios">—</strong><small>espacios en uso ahora</small></article>
+    <article class="ocupacion-tarjeta"><strong class="ocupacion-cifra" id="ocupacion-hoy">—</strong><small>reservas hoy</small></article>
+  </div>
+  <div class="ocupacion-graficas oc-graficas-original">
+    <article class="ocupacion-tarjeta ocupacion-por-espacio"><h3>Por espacio</h3><p class="nota"><span class="oc-leyenda-actual"></span> Ocupado ahora &nbsp; <span class="oc-leyenda-libre"></span> Disponible ahora</p><div id="ocupacion-lista" class="ocupacion-lista"><p class="nota">Cargando espacios…</p></div></article>
+    <div class="ocupacion-columna"><article class="ocupacion-tarjeta"><h3>Ocupación durante el día</h3><p class="nota oc-grafica-descripcion">Módulos reservados en cada hora (incluye horarios futuros).</p><div class="ocupacion-barras" id="ocupacion-horas" aria-label="Módulos reservados por hora de hoy"></div><p class="nota oc-grafica-resumen" id="ocupacion-hora-pico" aria-live="polite">Calculando hora de mayor ocupación…</p></article><article class="ocupacion-tarjeta"><h3>Reservas próximos 7 días</h3><div class="ocupacion-barras" id="ocupacion-semana" aria-label="Reservas confirmadas por día"></div></article></div>
+  </div>
+</section>
+<script src="{{ url_for('static', filename='ocupacion.js') }}" defer></script>

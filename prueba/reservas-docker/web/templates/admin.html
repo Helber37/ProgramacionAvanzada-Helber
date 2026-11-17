@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block titulo %}Administración | Reservas ITM{# El script solo controla la presentación; las acciones continúan protegidas en Flask. #}
+<script src="{{ url_for('static', filename='admin_tabs.js') }}" defer></script>
+{% endblock %}
+{% block contenido %}
+<section class="encabezado"><span class="etiqueta">Panel administrativo</span><h1>Gestión institucional</h1><p class="nota">Administra reservas, usuarios y espacios. Los cambios se guardan en PostgreSQL.</p></section>
+<div class="indicadores">
+  <article class="indicador"><strong>{{ estadisticas.espacios }}</strong><span>Espacios</span></article>
+  <article class="indicador"><strong>{{ estadisticas.usuarios }}</strong><span>Usuarios</span></article>
+  <article class="indicador"><strong>{{ estadisticas.activas }}</strong><span>Confirmadas</span></article>
+  <article class="indicador"><strong>{{ estadisticas.canceladas }}</strong><span>Canceladas</span></article>
+</div>
+{# Pestañas accesibles: solo una sección visible a la vez. #}
+<nav class="admin-tabs" role="tablist" aria-label="Secciones administrativas">
+  <button type="button" role="tab" id="tab-reservas" aria-controls="reservas" aria-selected="true" data-admin-tab="reservas">Reservas</button>
+  <button type="button" role="tab" id="tab-usuarios" aria-controls="usuarios" aria-selected="false" data-admin-tab="usuarios">Usuarios</button>
+  <button type="button" role="tab" id="tab-espacios" aria-controls="espacios" aria-selected="false" data-admin-tab="espacios">Espacios</button>
+  <button type="button" role="tab" id="tab-historial" aria-controls="historial" aria-selected="false" data-admin-tab="historial">Historial</button>
+</nav>
+<section class="tarjeta admin-seccion" id="reservas" role="tabpanel" aria-labelledby="tab-reservas"><h2>Reservas confirmadas</h2><p class="nota">Puedes cancelar reservas futuras. Al cancelar, sus módulos quedan disponibles.</p>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Espacio</th><th>Usuario</th><th>Fecha</th><th>Horario</th><th>Acción</th></tr></thead><tbody>
+{% for r in recientes if r.estado == 'confirmada' %}<tr><td>#{{ r.id }}</td><td>{{ r.espacio }}</td><td>{{ r.usuario }}<small class="detalle">{{ r.correo }}</small></td><td>{{ r.inicio.strftime('%d/%m/%Y') }}</td><td>{{ r.inicio|hora12 }} – {{ r.fin|hora12 }}</td><td>{% if r.inicio > ahora %}<form method="post" action="{{ url_for('admin_cancelar_reserva', reserva_id=r.id) }}" onsubmit="return confirm('¿Cancelar esta reserva?')"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="admin-peligro" type="submit">Cancelar</button></form>{% else %}<span class="nota">En curso / finalizada</span>{% endif %}</td></tr>{% else %}<tr><td colspan="6">No hay reservas confirmadas recientes.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="tarjeta admin-seccion" id="usuarios" role="tabpanel" aria-labelledby="tab-usuarios"><h2>Gestión de usuarios</h2><p class="nota">Los cambios de rol y la eliminación requieren superadministrador. No se eliminan usuarios con reservas asociadas.</p>
+<div class="scroll"><table><thead><tr><th>Usuario</th><th>Correo</th><th>Tipo / Rol</th><th>Acciones</th></tr></thead><tbody>
+{% for u in usuarios %}<tr><td>{{ u.nombre }}</td><td>{{ u.correo }}</td><td>{% if es_superadmin %}<form class="admin-form-inline" method="post" action="{{ url_for('actualizar_permisos', usuario_id=u.id) }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><select name="tipo_usuario" aria-label="Tipo de usuario">{% for tipo in tipos %}<option value="{{ tipo }}" {% if tipo == u.tipo_usuario %}selected{% endif %}>{{ tipo|capitalize }}</option>{% endfor %}</select><select name="rol" aria-label="Rol">{% for rol in roles %}<option value="{{ rol }}" {% if rol == u.rol %}selected{% endif %}>{{ rol|capitalize }}</option>{% endfor %}</select><button type="submit">Guardar rol</button></form>{% else %}{{ u.tipo_usuario|capitalize }} · {{ u.rol|capitalize }}{% endif %}</td><td>{% if es_superadmin and u.id != session.usuario_id and u.rol != 'superadministrador' %}<form method="post" action="{{ url_for('admin_eliminar_usuario', usuario_id=u.id) }}" onsubmit="return confirm('¿Eliminar permanentemente este usuario?')"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="admin-peligro" type="submit" {% if u.reservas %}disabled title="Tiene reservas asociadas"{% endif %}>Eliminar</button></form>{% else %}<span class="nota">Protegido</span>{% endif %}<small class="detalle">{{ u.reservas }} reservas</small></td></tr>{% else %}<tr><td colspan="4">No hay usuarios.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="tarjeta admin-seccion" id="espacios" role="tabpanel" aria-labelledby="tab-espacios"><h2>Gestión de espacios</h2><p class="nota">Agrega espacios con módulos y horario de lunes a sábado. También puedes editar, habilitar y eliminar espacios sin reservas.</p>
+<details class="admin-detalle"><summary>+ Agregar nuevo espacio</summary><form class="admin-form-grid" method="post" action="{{ url_for('admin_crear_espacio') }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><label>Nombre<input name="nombre" required maxlength="120" placeholder="Laboratorio de Robótica"></label><label>Edificio<select name="edificio_id" required>{% for ed in edificios %}<option value="{{ ed.id }}">{{ ed.nombre }}</option>{% endfor %}</select></label><label>Tipo<select name="tipo_id" required>{% for t in tipos_espacio %}<option value="{{ t.id }}">{{ t.nombre|replace('_',' ')|capitalize }}</option>{% endfor %}</select></label><label>Capacidad total<input name="capacidad" type="number" min="1" max="10000" value="20" required></label><label>Piso<input name="piso" type="number" value="1" required></label><label>Apertura<input name="apertura" type="time" value="06:00" required></label><label>Cierre<input name="cierre" type="time" value="22:00" required></label><label class="admin-ancho">Módulos (separados por comas)<input name="modulos" required value="Módulo A, Módulo B" placeholder="Módulo A, Módulo B"></label><label class="admin-check"><input name="accesible" type="checkbox"> Accesible</label><button type="submit">Guardar espacio</button></form></details>
+<div class="admin-espacios">{% for e in espacios %}<article class="admin-espacio"><div class="admin-espacio-cab"><div><h3>{{ e.nombre }}</h3><p class="nota">{{ e.edificio }} · {{ e.tipo|replace('_',' ') }} · {{ e.num_modulos }} módulos · {{ e.reservas }} reservas</p></div><span class="admin-estado">{{ 'Activo' if e.activo else 'Inactivo' }}</span></div>
+<div class="admin-modulos">{% for m in modulos if m.espacio_id == e.id %}<span>{{ m.nombre }}</span>{% endfor %}</div>
+<div class="admin-acciones"><form method="post" action="{{ url_for('admin_estado_espacio', espacio_id=e.id) }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button type="submit">{{ 'Deshabilitar' if e.activo else 'Habilitar' }}</button></form>{% if es_superadmin %}<form method="post" action="{{ url_for('admin_eliminar_espacio', espacio_id=e.id) }}" onsubmit="return confirm('¿Eliminar permanentemente este espacio y sus módulos?')"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="admin-peligro" type="submit" {% if e.reservas %}disabled title="Tiene reservas asociadas"{% endif %}>Eliminar</button></form>{% endif %}</div>
+<details class="admin-detalle"><summary>Editar espacio</summary><form class="admin-form-inline" method="post" action="{{ url_for('admin_editar_espacio', espacio_id=e.id) }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><label>Nombre<input name="nombre" value="{{ e.nombre }}" maxlength="120" required></label><label>Capacidad<input name="capacidad" type="number" min="1" value="{{ e.capacidad }}" required></label><button type="submit">Guardar cambios</button></form></details>
+<details class="admin-detalle"><summary>+ Agregar módulo</summary><form class="admin-form-inline" method="post" action="{{ url_for('admin_agregar_modulo', espacio_id=e.id) }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><label>Nombre<input name="nombre" required maxlength="80" placeholder="Módulo nuevo"></label><label>Capacidad<input name="capacidad" type="number" min="1" value="6" required></label><button type="submit">Agregar módulo</button></form></details>
+</article>{% else %}<p class="nota">No hay espacios registrados.</p>{% endfor %}</div></section>
+<section class="tarjeta admin-seccion" id="historial" role="tabpanel" aria-labelledby="tab-historial">
+  <h2>Historial de reservas</h2>
+  <p class="nota">Reservas canceladas y finalizadas. La eliminación es permanente y solo está disponible para superadministradores.</p>
+  {% if es_superadmin %}
+  <form id="form-eliminar-historial" method="post" action="{{ url_for('admin_eliminar_historial') }}" onsubmit="return confirmarEliminacionHistorial(this)">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="confirmacion" value="ELIMINAR">
+    <div class="admin-acciones" style="margin: 1rem 0; flex-wrap:wrap;">
+      <label for="modo-historial">Eliminar:</label>
+      <select name="modo" id="modo-historial" aria-label="Tipo de eliminación">
+        <option value="seleccionadas">Reservas seleccionadas</option>
+        <option value="canceladas">Todas las canceladas</option>
+        <option value="finalizadas">Todas las finalizadas</option>
+      </select>
+      <button type="submit" class="admin-peligro">Eliminar historial</button>
+    </div>
+  </form>
+  {% endif %}
+  <div class="scroll"><table><thead><tr>
+    {% if es_superadmin %}<th><input type="checkbox" id="seleccionar-todo-historial" aria-label="Seleccionar todas las reservas visibles"></th>{% endif %}
+    <th>ID</th><th>Espacio</th><th>Usuario</th><th>Fecha</th><th>Horario</th><th>Estado</th>
+  </tr></thead><tbody>
+    {% for r in recientes if r.estado == 'cancelada' or r.fin <= ahora %}
+    <tr>
+      {% if es_superadmin %}<td><input type="checkbox" name="reserva_ids" value="{{ r.id }}" form="form-eliminar-historial" class="historial-check" aria-label="Seleccionar reserva {{ r.id }}"></td>{% endif %}
+      <td>#{{ r.id }}</td><td>{{ r.espacio }}</td><td>{{ r.usuario }}</td>
+      <td>{{ r.inicio.strftime('%d/%m/%Y') }}</td><td>{{ r.inicio|hora12 }} – {{ r.fin|hora12 }}</td>
+      <td>{{ 'Cancelada' if r.estado == 'cancelada' else 'Finalizada' }}</td>
+    </tr>
+    {% else %}<tr><td colspan="{{ 7 if es_superadmin else 6 }}">No hay reservas en el historial reciente.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="nota">La tabla muestra hasta 300 reservas recientes. Las opciones «Todas» se aplican a todos los registros históricos de PostgreSQL, incluso los no visibles aquí.</p>
+</section>
+<script>
+function confirmarEliminacionHistorial(formulario) { // Valida selección y solicita confirmación.
+  const modo = formulario.elements.modo.value; // Operación solicitada.
+  const seleccionadas = document.querySelectorAll('.historial-check:checked').length; // Filas elegidas.
+  if (modo === 'seleccionadas' && seleccionadas === 0) { // Evita solicitudes vacías.
+    alert('Selecciona al menos una reserva del historial.');
+    return false;
+  }
+  const detalle = modo === 'seleccionadas' ? seleccionadas + ' reservas seleccionadas' :
+    modo === 'canceladas' ? 'TODAS las reservas canceladas' : 'TODAS las reservas finalizadas';
+  return confirm('¿Eliminar permanentemente ' + detalle + '? También se borrarán sus notificaciones. Esta acción no se puede deshacer.');
+}
+document.addEventListener('DOMContentLoaded', () => { // Selección masiva de filas visibles.
+  const todos = document.getElementById('seleccionar-todo-historial');
+  if (todos) todos.addEventListener('change', () => { // Marca o desmarca las filas.
+    document.querySelectorAll('.historial-check').forEach(c => { c.checked = todos.checked; });
+  });
+});
+</script>
+{# El script solo controla la presentación; las acciones continúan protegidas en Flask. #}
+<script src="{{ url_for('static', filename='admin_tabs.js') }}" defer></script>
+{% endblock %}

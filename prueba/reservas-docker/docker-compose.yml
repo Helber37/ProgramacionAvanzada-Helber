@@ -1,3 +1,5 @@
+name: reservas            # los contenedores se llamarán reservas-db-1, reservas-web-1, etc.
+
 services:
   db:
     image: postgres:16
@@ -6,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d:ro
@@ -22,7 +24,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
@@ -30,30 +32,31 @@ services:
       db:
         condition: service_healthy
 
-  mailpit:
-    image: axllent/mailpit:latest
-    ports:
-      - "8025:8025"
-      - "1025:1025"
-
   web:
     build: ./web
+    command: sh -c "python migrate_roles.py && exec gunicorn -c gunicorn.conf.py app:app"
     environment:
       DATABASE_URL: "dbname=${POSTGRES_DB} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=db"
       SECRET_KEY: "${SECRET_KEY}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
       DOMINIO_INSTITUCIONAL: "${DOMINIO_INSTITUCIONAL}"
-      SMTP_HOST: "${SMTP_HOST:-mailpit}"
-      SMTP_PORT: "${SMTP_PORT:-1025}"
+      SMTP_HOST: "${SMTP_HOST:-smtp.gmail.com}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
       SMTP_USER: "${SMTP_USER:-}"
       SMTP_PASSWORD: "${SMTP_PASSWORD:-}"
-      SMTP_FROM: "${SMTP_FROM:-reservas@demo.local}"
+      SMTP_FROM: "${SMTP_FROM:-reservas@universidad.edu.co}"
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Sistema de Reservas ITM}
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
+    healthcheck:           # permite ver "healthy" en docker compose ps
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/login')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
-      mailpit:
-        condition: service_started
 
 volumes:
   pgdata:

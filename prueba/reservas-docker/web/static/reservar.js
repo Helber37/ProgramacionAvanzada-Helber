@@ -7,8 +7,14 @@ let datos = { horario: [], cierres: [], ocupados: {} };
 const aMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const pct = (min) => Math.min(100, Math.max(0, ((min - A * 60) / TOTAL) * 100));
 
+// Convierte una hora de 24 h a una etiqueta de 12 h; los input type=time conservan HH:MM.
+const hora12 = valor => {
+  const [h, m = 0] = String(valor).split(':').map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'a. m.' : 'p. m.'}`;
+};
+
 // ---- escala de horas ----
-$('horas').innerHTML = Array.from({ length: (C - A) / 2 + 1 }, (_, i) => `<span>${A + i * 2}h</span>`).join('');
+$('horas').innerHTML = Array.from({ length: (C - A) / 2 + 1 }, (_, i) => `<span>${hora12(`${A + i * 2}:00`)}</span>`).join('');
 
 // ---- filtros ----
 function filtrarEspacios() {
@@ -37,7 +43,7 @@ async function cargarEspacio() {
   info = await (await fetch(`/api/espacio/${id}`)).json();
 
   const partes = [`Capacidad: ${info.capacidad} personas.`,
-    `Reserva con al menos ${info.anticipacion_dias} días de anticipación, máximo ${info.max_horas} horas.`];
+    `Reserva desde hoy según disponibilidad, máximo ${info.max_horas} horas.`];
   if (info.accesible) partes.push('Accesible para movilidad reducida' + (info.notas_accesibilidad ? `: ${info.notas_accesibilidad}.` : '.'));
   if (info.recursos.length) partes.push('Recursos: ' + info.recursos.map((r) => `${r.nombre} (${r.cantidad})`).join(', ') + '.');
   $('info').textContent = partes.join(' ');
@@ -59,7 +65,7 @@ async function cargarEspacio() {
   $('modulos-caja').hidden = info.modulos.length <= 1;
 
   const d = new Date();
-  d.setDate(d.getDate() + info.anticipacion_dias);
+  // Se permiten reservas desde el día actual, siempre que la hora sea futura.
   $('fecha').min = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   $('hora_inicio').dataset.max = info.max_horas;
   await cargarDisponibilidad();
@@ -77,7 +83,13 @@ async function cargarDisponibilidad() {
 // ---- dibujo de la franja: una fila por módulo ----
 const elegidos = () => {
   const marcados = [...document.querySelectorAll('input[name=modulos]:checked')].map((i) => Number(i.value));
-  return marcados.length ? marcados : (info ? info.modulos.map((m) => m.id) : []);
+  // Sin selección explícita, utilizar los módulos libres en el horario indicado.
+  if (marcados.length) return marcados;
+  if (!info) return [];
+  const ini = $('hora_inicio').value, fin = $('hora_fin').value;
+  if (!ini || !fin) return info.modulos.map((m) => m.id);
+  const a = aMin(ini), b = aMin(fin);
+  return info.modulos.filter((m) => !(datos.ocupados[m.id] || []).some((o) => a < aMin(o.fin) && b > aMin(o.inicio))).map((m) => m.id);
 };
 
 function cerrados() {
@@ -120,7 +132,7 @@ function dibujar() {
     const franja = document.createElement('div');
     franja.className = 'franja';
     cerrados().forEach(([a, c]) => franja.appendChild(bloque(a, c, 'cerrado')));
-    (m && datos.ocupados[m.id] || []).forEach((o) => franja.appendChild(bloque(aMin(o.inicio), aMin(o.fin), 'ocupado', `${o.inicio} - ${o.fin}`)));
+    (m && datos.ocupados[m.id] || []).forEach((o) => franja.appendChild(bloque(aMin(o.inicio), aMin(o.fin), 'ocupado', `${hora12(o.inicio)} - ${hora12(o.fin)}`)));
     if (hayRango && m && sel.includes(m.id)) franja.appendChild(bloque(aMin(ini), aMin(fin), 'tuyo'));
     fila.appendChild(franja);
     cont.appendChild(fila);
@@ -136,6 +148,8 @@ function validar() {
     const a = aMin(ini), b = aMin(fin);
     const sel = elegidos();
     if (b <= a) msg = 'La hora de fin debe ser posterior a la de inicio.';
+    else if ($('fecha').value && new Date(`${$('fecha').value}T${ini}:00`) <= new Date()) msg = 'Selecciona una fecha y hora futuras.';
+    else if (!sel.length) msg = 'No hay módulos libres en ese horario.';
     else if (b - a > info.max_horas * 60) msg = `Este espacio permite máximo ${info.max_horas} horas por reserva.`;
     else if (cerrados().some(([x, y]) => a < y && b > x)) msg = 'El espacio está cerrado en parte de ese horario.';
     else if (sel.some((id) => (datos.ocupados[id] || []).some((o) => a < aMin(o.fin) && b > aMin(o.inicio))))

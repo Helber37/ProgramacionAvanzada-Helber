@@ -3,7 +3,10 @@ CREATE TABLE "usuarios" (
   "nombre" text NOT NULL,
   "correo" text UNIQUE NOT NULL,
   "password_hash" text NOT NULL,
-  "rol" text NOT NULL DEFAULT 'estudiante'
+  "rol" text NOT NULL DEFAULT 'usuario',
+  "tipo_usuario" text NOT NULL DEFAULT 'estudiante',
+  CONSTRAINT usuarios_rol_valido CHECK (rol IN ('usuario','administrador','superadministrador')),
+  CONSTRAINT usuarios_tipo_valido CHECK (tipo_usuario IN ('estudiante','docente','empleado','egresado'))
 );
 
 CREATE TABLE "edificios" (
@@ -103,7 +106,7 @@ CREATE TABLE "notificaciones" (
   "enviada_en" timestamp
 );
 
-COMMENT ON COLUMN "usuarios"."rol" IS 'estudiante | docente | administrativo | admin';
+COMMENT ON COLUMN "usuarios"."rol" IS 'usuario | administrador | superadministrador';
 
 COMMENT ON COLUMN "categorias"."nombre" IS 'academico | deportivo | recreativo | eventos';
 

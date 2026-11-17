@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Reservas{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    // Aplicar la preferencia guardada antes de dibujar la página.
+    try { document.documentElement.dataset.theme = localStorage.getItem('itm-tema') === 'oscuro' ? 'oscuro' : 'claro'; }
+    catch (_) { document.documentElement.dataset.theme = 'claro'; }
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body{% if request.endpoint == "ocupacion" %} class="pagina-ocupacion"{% endif %}>
+  <header class="barra">
+    <a class="marca marca-itm" href="{{ url_for('inicio') }}" aria-label="ITM - Sistema de reservas">
+      <img class="logo-itm logo-itm-claro" src="{{ url_for('static', filename='img/logo-itm-claro.svg') }}" alt="ITM Institución Universitaria">
+      <img class="logo-itm logo-itm-oscuro" src="{{ url_for('static', filename='img/logo-itm-oscuro.svg') }}" alt="" aria-hidden="true">
+      <span class="nombre-sistema"><strong>Reserva de espacios</strong><small>Institución Universitaria ITM · Medellín</small></span>
+    </a>
+    {% if session.usuario_id %}
+    <nav>
+      <a href="{{ url_for('reservar') }}">Explorar espacios</a>
+      <a href="{{ url_for('ocupacion') }}"{% if request.endpoint == "ocupacion" %} aria-current="page"{% endif %}>Ocupación</a>
+      {% if puede_administrar %}<a href="{{ url_for('admin') }}">Administración</a>{% endif %}
+      <a href="{{ url_for('mis_reservas') }}">Mis reservas</a>
+      <form method="post" action="{{ url_for('logout') }}" class="form-salir"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button type="submit">Salir ({{ session.nombre }})</button></form>
+    </nav>
+    {% endif %}
+    <button type="button" id="cambiar-tema" class="boton-tema" aria-label="Activar modo oscuro" title="Cambiar apariencia">
+      <span id="icono-tema" aria-hidden="true">☾</span><span id="texto-tema">Modo oscuro</span>
+    </button>
+  </header>
+  <main class="ancho">
+    {% for categoria, msg in get_flashed_messages(with_categories=true) %}
+      <p class="aviso {{ categoria }}" role="alert">{{ msg }}</p>
+    {% endfor %}
+    {% block contenido %}{% endblock %}
+  </main>
+<footer class="pie-itm">Proyecto académico de gestión de espacios · ITM Medellín · Prototipo no oficial</footer>
+<script src="{{ url_for('static', filename='tema.js') }}" defer></script>
+</body>
+</html>
