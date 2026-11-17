@@ -1,3 +1,50 @@
+# Sistema de Reservas Institucionales ITM — Documentación integral
+
+> Documentación técnica y funcional. Este repositorio es un prototipo académico; no implica despliegue ni aprobación oficial del ITM.
+
+## Descripción y problema
+El proyecto digitaliza las reservas de espacios y módulos institucionales. Centraliza solicitudes, horarios, ocupación, usuarios, roles, cancelaciones, historial y correos de notificación. Evita que los módulos se asignen a reservas superpuestas mediante validaciones de aplicación y una restricción de exclusión en PostgreSQL.
+
+## Arquitectura de una petición
+1. El navegador presenta HTML, CSS y JavaScript y envía solicitudes HTTP.
+2. Gunicorn recibe las solicitudes y, mediante la interfaz WSGI, ejecuta Flask.
+3. Flask valida sesión, permisos, reglas de reserva y datos recibidos.
+4. `psycopg2` consulta PostgreSQL con parámetros SQL; la base conserva la información.
+5. Flask devuelve HTML o JSON; el módulo `correo.py` permite notificaciones SMTP/TLS.
+6. Docker Compose inicia y conecta los servicios `web`, `db` y `pgadmin`.
+
+**Conceptos:** Flask es el framework del servidor; PostgreSQL es el gestor de datos; WSGI es una interfaz entre Gunicorn y Flask, no una tabla; pgAdmin es una interfaz de administración; GPG firma commits de Git, no cifra la base de datos ni sustituye una licencia.
+
+## Diseño y funcionamiento de la base de datos
+- `usuarios`: correo, nombre, hash de contraseña, rol y tipo de usuario.
+- `edificios`, `categorias`, `tipos_espacio`: clasificación y políticas de anticipación y duración.
+- `espacios`, `horarios_espacio`, `cierres_espacio`: disponibilidad física y temporal.
+- `modulos`, `recursos`, `espacio_recursos`: unidades reservables y equipamiento.
+- `reservas`, `reserva_modulos`: solicitudes y módulos asociados.
+- `notificaciones`: mensajes y estado de entrega.
+
+La restricción `EXCLUDE USING gist` sobre `reserva_modulos` impide solapamientos de intervalos para un mismo módulo. El estado `finalizada` se determina por tiempo transcurrido en las vistas; la restricción SQL de `reservas.estado` contempla `confirmada` y `cancelada`.
+
+## Ciberseguridad: controles y límites reales
+**Incluido en el ZIP:** hashes de contraseñas mediante Werkzeug, consultas parametrizadas, autorización por rol consultando PostgreSQL, token CSRF en operaciones administrativas, `.gitignore` y puertos Docker enlazados a `127.0.0.1`.
+
+**Pendiente antes de producción:** sustituir la clave secreta de respaldo (`cambia-esto`) por una clave obligatoria, proteger globalmente los formularios, limitar intentos de inicio de sesión, endurecer cookies y cabeceras, desplegar HTTPS, realizar pruebas automatizadas y mantener copias de seguridad verificadas. El cierre de sesión usa GET en esta versión.
+
+**Advertencia:** el ZIP de origen incluye `.env`. Nunca lo publiques; si las credenciales fueron compartidas, cámbialas. No subas bases de datos, respaldos ni claves GPG privadas. Las firmas GPG de commits autentican la clave firmante, pero no acreditan por sí solas titularidad legal del software.
+
+## Verificación y pruebas recomendadas
+- Registro con correo del dominio configurado y rechazo de dominios no autorizados.
+- Inicio/cierre de sesión y permisos de usuario, administrador y superadministrador.
+- Reserva de módulo libre y rechazo de solapamiento de horario.
+- Cancelación y actualización del panel de ocupación.
+- Pestañas administrativas, creación de módulos y eliminación controlada de historial.
+- SMTP con cuenta de prueba y revisión de logs sin revelar secretos.
+- Restauración de un respaldo en una base separada.
+
+**Estado de comprobación:** se inspeccionó el código y la estructura del ZIP; no se ejecutaron pruebas funcionales con Docker ni pruebas de penetración.
+
+---
+
 # Sistema de Reservas de Espacios ITM
 
 Aplicación web para gestionar la reserva de espacios institucionales y sus módulos, consultar la ocupación y administrar usuarios, espacios y el historial de reservas.
