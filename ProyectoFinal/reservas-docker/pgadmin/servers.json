@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Reservas (demo)",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "reservas",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

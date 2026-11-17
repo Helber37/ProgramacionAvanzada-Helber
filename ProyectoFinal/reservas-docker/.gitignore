@@ -1,0 +1,58 @@
+
+# ==========================================
+# 1. CONTRASEÑAS Y VARIABLES DE ENTORNO
+# ==========================================
+
+.env                  # No subir contraseñas de Gmail, PostgreSQL y Flask.
+
+# ==========================================
+# 2. ARCHIVOS TEMPORALES DE PYTHON
+# ==========================================
+
+__pycache__/          # Carpeta de caché generada por Python.
+*.pyc                 # Archivos compilados de Python.
+*.pyo                 # Archivos optimizados de Python.
+.pytest_cache/        # Archivos temporales de pruebas.
+
+# ==========================================
+# 3. ENTORNOS VIRTUALES
+# ==========================================
+
+.venv/                # Entorno virtual de Python.
+venv/                 # Otra posible carpeta del entorno virtual.
+env/                  # Otra posible carpeta del entorno virtual.
+
+# ==========================================
+# 4. CONFIGURACIÓN DEL EDITOR
+# ==========================================
+
+.vscode/              # Configuración local de Visual Studio Code.
+.idea/                # Configuración de PyCharm.
+
+# ==========================================
+# 5. BASE DE DATOS POSTGRESQL
+# ==========================================
+
+*.dump                # Copias de seguridad de PostgreSQL.
+*.backup              # Archivos de respaldo de PostgreSQL.
+backups/              # Carpeta donde se guardan los respaldos.
+pgdata/               # Datos locales de PostgreSQL.
+postgres_data/        # Otra posible carpeta de datos.
+
+# ==========================================
+# 6. ARCHIVOS TEMPORALES
+# ==========================================
+
+*.log                 # Registros de ejecución.
+*.tmp                 # Archivos temporales.
+*.swp                 # Archivos temporales del editor.
+.DS_Store             # Archivos generados por macOS.
+Thumbs.db             # Archivos generados por Windows.
+
+# ==========================================
+# 7. ARCHIVOS GENERADOS AL COMPILAR
+# ==========================================
+
+build/                # Archivos temporales de construcción.
+dist/                 # Archivos generados al distribuir Python.
+*.egg-info/           # Metadatos de paquetes Python.

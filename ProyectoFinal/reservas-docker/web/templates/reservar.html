@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block titulo %}Reservar un espacio{% endblock %}
+{% block contenido %}
+<section class="hero-reserva"><div><span class="etiqueta">RESERVAS INSTITUCIONALES</span><h1>Encuentra el espacio ideal para tu actividad</h1><p>Consulta la disponibilidad en tiempo real y reserva laboratorios, canchas o salas de reunión.</p></div><div class="hero-icon">▦</div></section>
+<div class="reserva-layout"><aside class="panel-lateral"><h2>¿Cómo funciona?</h2><div class="paso"><b>01</b><span>Selecciona una categoría y un espacio.</span></div><div class="paso"><b>02</b><span>Consulta la fecha y los horarios disponibles.</span></div><div class="paso"><b>03</b><span>Confirma y recibe tu notificación por correo.</span></div><div class="normas"><strong>Reglas de reserva</strong><p>Reserva desde hoy si hay disponibilidad. Se respetan horarios, cierres y duración máxima.</p></div></aside>
+<section class="tarjeta reserva-principal"><div class="titulo-form"><span class="etiqueta">NUEVA RESERVA</span><h2>Selecciona tu espacio</h2><p class="nota">Los espacios se cargan desde PostgreSQL.</p></div>
+  <form method="post" id="form-reserva">
+    <div class="fila">
+      <label>Categoría
+        <select id="categoria">
+          <option value="">Todas</option>
+          {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre|capitalize }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="solo_accesibles"> Solo espacios accesibles (movilidad reducida)</label>
+    </div>
+
+    <div class="fila fila-espacio-fecha"><label>Espacio
+      <select name="espacio_id" id="espacio" required>
+        <option value="" disabled selected>Elige un espacio</option>
+        {% for e in espacios %}
+        <option value="{{ e.id }}" data-categoria="{{ e.categoria_id }}" data-accesible="{{ 1 if e.accesible else 0 }}">
+          {{ e.nombre }} ({{ e.tipo|replace('_', ' ') }}){% if e.accesible %} - accesible{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fecha <input type="date" name="fecha" id="fecha" required></label></div>
+    <p class="nota" id="info" hidden></p>
+
+    <fieldset id="modulos-caja" hidden>
+      <legend>Módulos (si no eliges ninguno, se reservan los disponibles)</legend>
+      <div id="modulos"></div>
+    </fieldset>
+
+    <div class="fila">
+      <label>Inicio <input type="time" name="hora_inicio" id="hora_inicio" required></label>
+      <label>Fin <input type="time" name="hora_fin" id="hora_fin" required></label>
+    </div>
+    <div class="fila">
+      <label>Número de asistentes <input type="number" name="asistentes" id="asistentes" min="1"></label>
+      <label>Motivo <input type="text" name="motivo" maxlength="200" placeholder="Práctica, reunión, torneo..."></label>
+    </div>
+
+    <div class="franja-caja">
+      <div id="franjas"></div>
+      <div class="horas" id="horas"></div>
+      <p class="leyenda"><span class="pt ocupado"></span> Ocupado <span class="pt cerrado"></span> Cerrado <span class="pt tuyo"></span> Tu selección</p>
+    </div>
+    <p class="aviso error" id="error-js" hidden></p>
+    <button class="boton-principal">Confirmar reserva →</button>
+  </form>
+</section></div>
+<script src="{{ url_for('static', filename='reservar.js') }}"></script>
+{% endblock %}

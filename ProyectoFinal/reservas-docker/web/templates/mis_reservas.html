@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block titulo %}Mis reservas{% endblock %}
+{% block contenido %}
+<section class="hero-reserva"><div><span class="etiqueta">MI ACTIVIDAD</span><h1>Mis reservas</h1><p>Consulta y administra los espacios que has reservado.</p></div><div class="hero-icon">▤</div></section>
+<section class="tarjeta mis-reservas-panel">
+  <div class="reservas-pestanas" role="tablist" aria-label="Tipo de reservas">
+    <button type="button" class="reservas-pestana activa" role="tab" id="tab-vigentes" aria-selected="true" aria-controls="panel-vigentes" data-reservas-tab="vigentes">Mis reservas <span class="reservas-contador">{{ reservas_vigentes|length }}</span></button>
+    <button type="button" class="reservas-pestana" role="tab" id="tab-historial" aria-selected="false" aria-controls="panel-historial" data-reservas-tab="historial">Historial <span class="reservas-contador">{{ reservas_historial|length }}</span></button>
+  </div>
+  <div id="panel-vigentes" role="tabpanel" aria-labelledby="tab-vigentes">
+    {% if reservas_vigentes %}
+      <div class="scroll"><table><thead><tr><th>Espacio</th><th>Módulos</th><th>Fecha</th><th>Horario</th><th>Estado</th></tr></thead><tbody>
+      {% for r in reservas_vigentes %}<tr>
+        <td>{{ r.espacio }}</td><td>{{ r.modulos or '-' }}</td><td>{{ r.inicio.strftime('%d/%m/%Y') }}</td>
+        <td>{{ r.inicio|hora12 }} a {{ r.fin|hora12 }}</td>
+        <td>{% if r.inicio > ahora %}<span class="estado estado-confirmada">Confirmada</span>
+          <form method="post" action="{{ url_for('cancelar', rid=r.id) }}" class="reserva-cancelar"><button class="secundario" type="submit">Cancelar</button></form>
+          {% else %}<span class="estado estado-en-curso">En curso</span>{% endif %}</td>
+      </tr>{% endfor %}
+      </tbody></table></div>
+    {% else %}<p class="reservas-vacio">No tienes reservas vigentes. <a href="{{ url_for('reservar') }}">Reservar un espacio</a>.</p>{% endif %}
+  </div>
+  <div id="panel-historial" role="tabpanel" aria-labelledby="tab-historial" hidden>
+    {% if reservas_historial %}
+      <div class="scroll"><table><thead><tr><th>Espacio</th><th>Módulos</th><th>Fecha</th><th>Horario</th><th>Estado</th></tr></thead><tbody>
+      {% for r in reservas_historial %}<tr>
+        <td>{{ r.espacio }}</td><td>{{ r.modulos or '-' }}</td><td>{{ r.inicio.strftime('%d/%m/%Y') }}</td>
+        <td>{{ r.inicio|hora12 }} a {{ r.fin|hora12 }}</td>
+        <td>{% if r.estado == 'cancelada' %}<span class="estado estado-cancelada">Cancelada</span>
+          {% else %}<span class="estado estado-finalizada">Finalizada</span>{% endif %}</td>
+      </tr>{% endfor %}
+      </tbody></table></div>
+    {% else %}<p class="reservas-vacio">Todavía no tienes reservas canceladas o finalizadas.</p>{% endif %}
+  </div>
+</section>
+<script>
+// Cambia entre reservas vigentes e historial sin recargar ni eliminar registros.
+(() => {
+  const botones = document.querySelectorAll('[data-reservas-tab]');
+  botones.forEach(boton => boton.addEventListener('click', () => {
+    botones.forEach(b => {
+      const activo = b === boton;
+      b.classList.toggle('activa', activo);
+      b.setAttribute('aria-selected', String(activo));
+      document.getElementById('panel-' + b.dataset.reservasTab).hidden = !activo;
+    });
+  }));
+})();
+</script>
+{% endblock %}
