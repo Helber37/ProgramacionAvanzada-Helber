@@ -12,13 +12,20 @@
     catch (_) { document.documentElement.dataset.theme = 'claro'; }
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Tamaño del logotipo SRE en pantallas grandes y pequeñas */
+    .logo-itm { width: 150px; height: 75px; max-width: none; object-fit: contain; }
+    @media (max-width: 720px) {
+      .logo-itm { width: 110px; height: 60px; }
+    }
+  </style>
 </head>
 <body{% if request.endpoint == "ocupacion" %} class="pagina-ocupacion"{% endif %}>
   <header class="barra">
-    <a class="marca marca-itm" href="{{ url_for('inicio') }}" aria-label="ITM - Sistema de reservas">
-      <img class="logo-itm logo-itm-claro" src="{{ url_for('static', filename='img/logo-itm-claro.svg') }}" alt="ITM Institución Universitaria">
-      <img class="logo-itm logo-itm-oscuro" src="{{ url_for('static', filename='img/logo-itm-oscuro.svg') }}" alt="" aria-hidden="true">
-      <span class="nombre-sistema"><strong>Reserva de espacios</strong><small>Institución Universitaria ITM · Medellín</small></span>
+    <a class="marca marca-itm" href="{{ url_for('inicio') }}" aria-label="SRE - Sistema de reservas">
+      <img class="logo-itm logo-itm-claro" src="{{ url_for('static', filename='img/logo-sre-claro.svg') }}" alt="SRE - Sistema de Reservas de Espacios">
+      <img class="logo-itm logo-itm-oscuro" src="{{ url_for('static', filename='img/logo-sre-oscuro.svg') }}" alt="" aria-hidden="true">
+      <span class="nombre-sistema"><strong>Reserva de espacios</strong><small>SRE · Sistema de Reservas de Espacios</small></span>
     </a>
     {% if session.usuario_id %}
     <nav>

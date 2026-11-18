@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="112" viewBox="0 0 440 112">
+<g transform="translate(8 12)">
+<rect width="88" height="88" rx="22" fill="#2059CF"/>
+<rect x="19" y="23" width="50" height="48" rx="7" fill="none" stroke="white" stroke-width="5"/>
+<path d="M19 37H69 M31 16V29 M57 16V29" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"/>
+<path d="M30 52L40 61L59 44" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="113" y="62" fill="#123C76" font-family="DejaVu Sans,Arial,sans-serif" font-size="49" font-weight="bold">SRE</text>
+<text x="115" y="85" fill="#2059CF" font-family="DejaVu Sans,Arial,sans-serif" font-size="14" font-weight="bold">RESERVA DE ESPACIOS</text>
+</svg>
