@@ -513,6 +513,14 @@ def ocupacion():
 @login_required
 def api_ocupacion():
     """Resumen de reservas confirmadas; una consulta por actualización del navegador."""
+    # Diagnóstico temporal: identifica la base de datos consultada por Flask.
+    diagnostico = query("""
+        SELECT current_database() AS base_datos, current_user AS usuario,
+               (SELECT COUNT(*) FROM espacios) AS espacios_totales,
+               (SELECT COUNT(*) FROM espacios WHERE activo) AS espacios_activos,
+               (SELECT COUNT(*) FROM modulos) AS modulos_totales
+    """, uno=True)  # Obtiene información de la conexión real y sus registros.
+    print("DIAGNOSTICO OCUPACION:", dict(diagnostico), flush=True)  # Escribe el resultado en los registros de Docker.
     ahora = datetime.now(ZoneInfo("America/Bogota")).replace(tzinfo=None)  # Hora de Colombia; reservas guardadas sin zona horaria.
     inicio_dia = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
     fin_dia = inicio_dia + timedelta(days=1)
